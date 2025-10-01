@@ -9,6 +9,7 @@ class RunTestRequest(BaseModel):
     auth: dict | None = None
     timeout: int | None = None
 
+
 class RunTestResponse(BaseModel):
     run_id: str
     timestamp: str
@@ -20,31 +21,28 @@ class RunTestResponse(BaseModel):
     elapsed_ms: float
     error: str | None = None
 
-class LogEntry(BaseModel):
-    run_id: str
-    timestamp: str
-    url: str
-    method: str
-    response_status: int | None = None
-    response_headers: dict | None = None
-    response_body: str | None = None
-    elapsed_ms: float
-    error: str | None = None
+
+class LogEntry(RunTestResponse):
+    user_id: str  # attach the log to a user
+
 
 class UserSignup(BaseModel):
     username: str
     email: EmailStr
     password: str
 
+
 class UserResponse(BaseModel):
     id: str
     username: str
     email: EmailStr
 
-class UserLoginRequest:
+
+class UserLoginRequest(BaseModel):
     username: str
     password: str
 
-class TokenResponse:
+
+class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
