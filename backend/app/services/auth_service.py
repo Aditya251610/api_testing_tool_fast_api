@@ -1,6 +1,6 @@
 from passlib.hash import pbkdf2_sha256
 from dotenv import load_dotenv
-from app.models.schemas import UserSignup, UserResponse, UserLoginRequest
+from app.models.schemas import UserSignup, UserResponse, UserLoginRequest, TokenResponse
 from app.utils.db import users_collection
 from jose import jwt
 from datetime import datetime, timezone, timedelta
@@ -13,6 +13,9 @@ ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 
+# -------------------------
+# Password utilities
+# -------------------------
 def hash_password(password: str):
     return pbkdf2_sha256.hash(password)
 
@@ -21,6 +24,9 @@ def verify_password(plain: str, hashed: str) -> bool:
     return pbkdf2_sha256.verify(plain, hashed)
 
 
+# -------------------------
+# User Signup
+# -------------------------
 async def create_user(user_data: UserSignup):
     existing_user = await users_collection.find_one({"username": user_data.username})
     if existing_user:
@@ -42,25 +48,34 @@ async def create_user(user_data: UserSignup):
     )
 
 
+# -------------------------
+# Authentication
+# -------------------------
 async def authenticate_user(user_login_request: UserLoginRequest):
     user = await users_collection.find_one({"username": user_login_request.username})
     if not user:
         return None
+
     if not verify_password(user_login_request.password, user["password"]):
         return None
+
     return user
 
 
 def create_access_token(data: dict, expires_delta: timedelta | None = None):
     to_encode = data.copy()
-    expire = datetime.now(timezone.utc) + (
-        expires_delta or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    )
+
+    if expires_delta:
+        expire = datetime.now(timezone.utc) + expires_delta
+    else:
+        expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+
     to_encode.update({"exp": expire})
-    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return encoded_jwt
 
 
-async def login(user_login_request: UserLoginRequest):
+async def login(user_login_request: UserLoginRequest) -> TokenResponse | None:
     user = await authenticate_user(user_login_request)
     if not user:
         return None
@@ -71,7 +86,7 @@ async def login(user_login_request: UserLoginRequest):
         expires_delta=access_token_expires
     )
 
-    return {
-        "access_token": token,
-        "token_type": "bearer"
-    }
+    return TokenResponse(
+        access_token=token,
+        token_type="bearer"
+    )

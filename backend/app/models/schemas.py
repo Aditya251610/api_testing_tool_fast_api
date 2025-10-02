@@ -1,5 +1,6 @@
 from pydantic import BaseModel, EmailStr
 
+
 class RunTestRequest(BaseModel):
     url: str
     method: str

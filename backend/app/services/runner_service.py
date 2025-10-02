@@ -34,7 +34,7 @@ async def run_test(request: RunTestRequest, current_user: dict) -> RunTestRespon
             elapsed_ms=(end_time - start_time) * 1000,
             error=str(e)
         )
-        await logs_collection.insert_one({**res.model_dump(), "user_id": current_user["id"]})
+        await logs_collection.insert_one({**res.model_dump(), "user_id": str(current_user["id"])})
         return res
 
     end_time = time()
@@ -50,5 +50,5 @@ async def run_test(request: RunTestRequest, current_user: dict) -> RunTestRespon
         error=None
     )
 
-    await logs_collection.insert_one({**res.model_dump(), "user_id": current_user["id"]})
+    await logs_collection.insert_one({**res.model_dump(), "user_id": str(current_user["id"])})
     return res
