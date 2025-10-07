@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException, status
 from app.models.schemas import UserSignup, UserLoginRequest
 from app.services.auth_service import create_user, login
 
@@ -12,4 +12,7 @@ async def signup(user_signup_data: UserSignup):
 
 @router.post("/login")
 async def login_user(user_login_data: UserLoginRequest):
-    return await login(user_login_data)
+    res = await login(user_login_data)
+    if not res:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid username or password")
+    return res
