@@ -14,18 +14,32 @@ const AuthContext = createContext<{
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [token, setToken] = useState<string | null>(null);
   const [user, setUser] = useState<User>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    // Check for existing token on mount
     const t = localStorage.getItem("token");
     if (t) {
       setToken(t);
       try {
         const payload = JSON.parse(atob(t.split(".")[1]));
-        setUser({ id: payload.id, username: payload.sub });
+        // Check if token is expired
+        const exp = payload.exp * 1000; // Convert to milliseconds
+        if (exp > Date.now()) {
+          setUser({ id: payload.id, username: payload.sub });
+        } else {
+          // Token expired, clear it
+          localStorage.removeItem("token");
+          setToken(null);
+          setUser(null);
+        }
       } catch (e) {
+        localStorage.removeItem("token");
+        setToken(null);
         setUser(null);
       }
     }
+    setIsLoading(false);
   }, []);
 
   const signin = async (data: { username: string; password: string }) => {

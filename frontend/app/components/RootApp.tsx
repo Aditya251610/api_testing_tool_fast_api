@@ -1,28 +1,45 @@
 "use client";
-"use client";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { AuthProvider, useAuth } from "./AuthProvider";
 import Navbar from "./Navbar";
 import { usePathname, useRouter } from "next/navigation";
 
 function ClientApp({ children }: { children: React.ReactNode }) {
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const pathname = usePathname();
   const router = useRouter();
+  const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
-    // If user not authenticated and not on login/signup pages, redirect to /login
-    const publicPaths = ["/login", "/signup"];
-    const isPublic = publicPaths.some((p) => pathname?.startsWith(p));
-    if (!user && !isPublic) {
+    // Wait for auth to be initialized
+    setIsReady(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isReady) return;
+
+    // Public paths that don't require authentication
+    const publicPaths = ["/", "/login", "/signup"];
+    const isPublicPath = publicPaths.includes(pathname);
+
+    // Protected paths that require authentication
+    const protectedPaths = ["/dashboard", "/logs"];
+    const isProtectedPath = protectedPaths.some((p) => pathname.startsWith(p));
+
+    // If user is not authenticated and trying to access protected route
+    if (!user && !token && isProtectedPath) {
       router.push("/login");
     }
-  }, [user, pathname, router]);
+  }, [user, token, pathname, router, isReady]);
+
+  // Pages without navbar
+  const pagesWithoutNavbar = ["/", "/login", "/signup"];
+  const shouldShowNavbar = !pagesWithoutNavbar.includes(pathname);
 
   return (
     <>
-      <Navbar />
-      <main className="p-6">{children}</main>
+      {shouldShowNavbar && <Navbar />}
+      <main className="min-h-screen">{children}</main>
     </>
   );
 }
