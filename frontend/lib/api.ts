@@ -1,4 +1,4 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://potential-space-journey-5w944wv9pg5c7x7j-8000.app.github.dev";
+const API_URL = "https://symmetrical-lamp-ww499wv44xgf9qgr-8000.app.github.dev";
 
 type FetchOptions = Omit<RequestInit, "body"> & { json?: any; body?: BodyInit | null };
 
